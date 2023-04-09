@@ -56,7 +56,7 @@ const SERVER: Token = Token(0);
 
 
 /// A WebSocket echo server
-fn main () -> io::Result<()> { // why the fuck main returns result?
+fn main () {
     // Create a poll instance.
     let mut poll = Poll::new().unwrap();
     // Create storage for events.
@@ -98,7 +98,8 @@ fn main () -> io::Result<()> { // why the fuck main returns result?
                         Err(e) => {
                             // If it was any other kind of error, something went
                             // wrong and we terminate with an error.
-                            return Err(e);
+                            // return Err(e);
+                            panic!("{}", e);
                         }
                     };
 
@@ -109,7 +110,7 @@ fn main () -> io::Result<()> { // why the fuck main returns result?
                         &mut stream,
                         token,
                         Interest::READABLE.add(Interest::WRITABLE),
-                    )?;
+                    ).unwrap();
 
                     let client = Client::new(stream);
 
@@ -136,7 +137,7 @@ fn main () -> io::Result<()> { // why the fuck main returns result?
                         EventResult::ConnectionClosed => {
                             if let Some(mut client) = clients.remove(&token) {
                                 println!("Removed client from map, deregistering from polling");
-                                poll.registry().deregister(client.get_stream())?;
+                                poll.registry().deregister(client.get_stream()).unwrap();
                             }
                         }
                         EventResult::Noop => {}
@@ -181,7 +182,7 @@ fn handle_connection_event(
                     .into_text()
                     .unwrap();
 
-                if message.is_empty() { // close?
+                if message.is_empty() {
                     println!("Message is empty, closing connection");
                     client.websocket.as_mut().unwrap().close(None);
                     return EventResult::ConnectionClosed;
